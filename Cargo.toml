@@ -11,6 +11,6 @@ rand = { version = "0.8.5", optional = true }
 approx = "0.5.1"
 
 [features]
-normal = ["dep:statrs", "dep:rand"]
+random = ["dep:statrs", "dep:rand"]
 
-default = ["normal"]
+default = ["random"]

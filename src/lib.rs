@@ -15,12 +15,22 @@ impl Torus {
         Torus { inner }
     }
 
-    #[cfg(feature = "normal")]
-    pub fn sample(std: f64, state: &mut impl rand::Rng) -> Torus {
+    #[cfg(feature = "random")]
+    pub fn normal(std: f64, state: &mut impl rand::Rng) -> Torus {
         use rand::distributions::Distribution;
 
         let normal = statrs::distribution::Normal::new(0., std).unwrap();
         let sample = normal.sample(state);
+
+        Torus::from(sample)
+    }
+
+    #[cfg(feature = "random")]
+    pub fn uniform(state: &mut impl rand::Rng) -> Torus {
+        use rand::distributions::Distribution;
+
+        let uniform = rand::distributions::Uniform::new(0., 1.);
+        let sample = uniform.sample(state);
 
         Torus::from(sample)
     }
@@ -325,28 +335,39 @@ mod tests {
         assert_eq!(t1.inner, 0);
     }
 
-    #[cfg(feature = "normal")]
+    #[cfg(feature = "random")]
     #[test]
-    fn test_sample() {
+    fn test_normal() {
         for _ in 0..1000 {
             let mut rng = rand::thread_rng();
-            let t = Torus::sample(0.1, &mut rng);
+            let t = Torus::normal(0.1, &mut rng);
             assert!(<Torus as Into<f64>>::into(t) >= 0.0);
             assert!(<Torus as Into<f64>>::into(t) < 1.0);
         }
     }
 
-    #[cfg(feature = "normal")]
+    #[cfg(feature = "random")]
     #[test]
-    fn test_sample_approx() {
+    fn test_normal_approx() {
         let sum: f64 = (0..1000)
             .map(|_| {
                 let mut rng = rand::thread_rng();
-                let t = Torus::sample(0.1, &mut rng);
+                let t = Torus::normal(0.1, &mut rng);
                 <Torus as Into<f64>>::into(t)
             })
             .sum();
 
         assert_relative_eq!(sum / 1000.0, 0.5, epsilon = 0.1);
+    }
+
+    #[cfg(feature = "random")]
+    #[test]
+    fn test_uniform() {
+        for _ in 0..1000 {
+            let mut rng = rand::thread_rng();
+            let t = Torus::uniform(&mut rng);
+            assert!(<Torus as Into<f64>>::into(t) >= 0.0);
+            assert!(<Torus as Into<f64>>::into(t) < 1.0);
+        }
     }
 }
