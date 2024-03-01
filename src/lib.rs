@@ -275,4 +275,11 @@ mod tests {
         let t2 = t1 * -2;
         assert_relative_eq!(<Torus as Into<f64>>::into(t2), 0.8, epsilon = 0.0001);
     }
+
+    #[test]
+    fn test_mul_assign() {
+        let mut t1 = Torus::new(1 << 15);
+        t1 *= 2;
+        assert_eq!(t1.inner, 0);
+    }
 }
