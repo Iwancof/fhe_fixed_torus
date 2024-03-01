@@ -13,7 +13,6 @@ pub struct Torus {
 }
 
 impl Torus {
-    const BITS: u32 = TorusRepr::BITS;
     const SHIFT: u32 = TorusRepr::MAX;
 
     pub fn new(inner: TorusRepr) -> Torus {
@@ -141,7 +140,7 @@ impl std::ops::Mul<f64> for Torus {
 mod tests {
     use super::*;
 
-    const ZERO_POINTS_FIVE: TorusRepr = 1 << (Torus::BITS - 1);
+    const ZERO_POINTS_FIVE: TorusRepr = 1 << (TorusRepr::BITS - 1);
 
     #[test]
     fn test_from_float() {
