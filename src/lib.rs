@@ -14,12 +14,25 @@ impl Torus {
     pub fn new(inner: u16) -> Torus {
         Torus { inner }
     }
+
+    #[cfg(feature = "normal")]
+    pub fn sample(std: f64, state: &mut impl rand::Rng) -> Torus {
+        use rand::distributions::Distribution;
+
+        let normal = statrs::distribution::Normal::new(0., std).unwrap();
+        let sample = normal.sample(state);
+
+        Torus::from(sample)
+    }
 }
 
 impl From<f64> for Torus {
     fn from(f: f64) -> Torus {
-        let inner = (f * 65536.0) as u16;
-        Torus { inner }
+        let mut inner = (f * 65536.0) as i32;
+        inner &= 0xffff;
+        Torus {
+            inner: inner as u16,
+        }
     }
 }
 
@@ -114,7 +127,6 @@ impl std::ops::Mul<f64> for Torus {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
 
     #[test]
     fn test_new() {
@@ -126,6 +138,36 @@ mod tests {
     fn test_from_float() {
         let t = Torus::from(0.5);
         assert_eq!(t.inner, 1 << 15);
+    }
+
+    #[test]
+    fn test_from_float_wrap_1() {
+        let t = Torus::from(1.5);
+        assert_eq!(t.inner, 1 << 15);
+    }
+
+    #[test]
+    fn test_from_float_wrap_2() {
+        let t = Torus::from(134.2);
+        assert_relative_eq!(<Torus as Into<f64>>::into(t), 0.2, epsilon = 0.0001);
+    }
+
+    #[test]
+    fn test_from_float_neg() {
+        let t = Torus::from(-0.5);
+        assert_eq!(t.inner, 1 << 15);
+    }
+
+    #[test]
+    fn test_from_float_neg_wrap() {
+        let t = Torus::from(-1.5);
+        assert_eq!(t.inner, 1 << 15);
+    }
+
+    #[test]
+    fn test_from_float_neg_wrap_2() {
+        let t = Torus::from(-134.2);
+        assert_relative_eq!(<Torus as Into<f64>>::into(t), 0.8, epsilon = 0.0001);
     }
 
     #[test]
@@ -281,5 +323,30 @@ mod tests {
         let mut t1 = Torus::new(1 << 15);
         t1 *= 2;
         assert_eq!(t1.inner, 0);
+    }
+
+    #[cfg(feature = "normal")]
+    #[test]
+    fn test_sample() {
+        for _ in 0..1000 {
+            let mut rng = rand::thread_rng();
+            let t = Torus::sample(0.1, &mut rng);
+            assert!(<Torus as Into<f64>>::into(t) >= 0.0);
+            assert!(<Torus as Into<f64>>::into(t) < 1.0);
+        }
+    }
+
+    #[cfg(feature = "normal")]
+    #[test]
+    fn test_sample_approx() {
+        let sum: f64 = (0..1000)
+            .map(|_| {
+                let mut rng = rand::thread_rng();
+                let t = Torus::sample(0.1, &mut rng);
+                <Torus as Into<f64>>::into(t)
+            })
+            .sum();
+
+        assert_relative_eq!(sum / 1000.0, 0.5, epsilon = 0.1);
     }
 }
