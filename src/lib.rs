@@ -2,16 +2,21 @@
 #[macro_use]
 extern crate approx;
 
+type TorusRepr = u32;
+
 /// Fixed point float
 /// for example, 0b10000000... = 0.5
 /// So, for all t in Torus, 0 <= t < 1
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct Torus {
-    inner: u16,
+    inner: TorusRepr,
 }
 
 impl Torus {
-    pub fn new(inner: u16) -> Torus {
+    const BITS: u32 = TorusRepr::BITS;
+    const SHIFT: u32 = TorusRepr::MAX;
+
+    pub fn new(inner: TorusRepr) -> Torus {
         Torus { inner }
     }
 
@@ -38,17 +43,15 @@ impl Torus {
 
 impl From<f64> for Torus {
     fn from(f: f64) -> Torus {
-        let mut inner = (f * 65536.0) as i32;
-        inner &= 0xffff;
-        Torus {
-            inner: inner as u16,
-        }
+        let f = f.rem_euclid(1.0);
+        let inner = (f * (Torus::SHIFT as f64)) as TorusRepr;
+        Torus { inner }
     }
 }
 
 impl Into<f64> for Torus {
     fn into(self) -> f64 {
-        (self.inner as f64) / 65536.0
+        (self.inner as f64) / (Self::SHIFT as f64)
     }
 }
 
@@ -106,7 +109,7 @@ impl std::ops::Mul<i32> for Torus {
     type Output = Torus;
 
     fn mul(self, rhs: i32) -> Torus {
-        let inner = self.inner.wrapping_mul(rhs as u16);
+        let inner = self.inner.wrapping_mul(rhs as TorusRepr);
         Torus { inner }
     }
 }
@@ -129,7 +132,7 @@ impl std::ops::Mul<f64> for Torus {
     type Output = Torus;
 
     fn mul(self, rhs: f64) -> Torus {
-        let inner = (self.inner as f64 * rhs) as u16;
+        let inner = (self.inner as f64 * rhs) as TorusRepr;
         Torus { inner }
     }
 }
@@ -138,22 +141,18 @@ impl std::ops::Mul<f64> for Torus {
 mod tests {
     use super::*;
 
-    #[test]
-    fn test_new() {
-        let t = Torus::new(1 << 15);
-        assert_eq!(t.inner, 1 << 15);
-    }
+    const ZERO_POINTS_FIVE: TorusRepr = 1 << (Torus::BITS - 1);
 
     #[test]
     fn test_from_float() {
         let t = Torus::from(0.5);
-        assert_eq!(t.inner, 1 << 15);
+        assert_relative_eq!(<Torus as Into<f64>>::into(t), 0.5, epsilon = 0.0001);
     }
 
     #[test]
     fn test_from_float_wrap_1() {
         let t = Torus::from(1.5);
-        assert_eq!(t.inner, 1 << 15);
+        assert_relative_eq!(<Torus as Into<f64>>::into(t), 0.5, epsilon = 0.0001);
     }
 
     #[test]
@@ -165,13 +164,13 @@ mod tests {
     #[test]
     fn test_from_float_neg() {
         let t = Torus::from(-0.5);
-        assert_eq!(t.inner, 1 << 15);
+        assert_relative_eq!(<Torus as Into<f64>>::into(t), 0.5, epsilon = 0.0001);
     }
 
     #[test]
     fn test_from_float_neg_wrap() {
         let t = Torus::from(-1.5);
-        assert_eq!(t.inner, 1 << 15);
+        assert_relative_eq!(<Torus as Into<f64>>::into(t), 0.5, epsilon = 0.0001);
     }
 
     #[test]
@@ -182,15 +181,15 @@ mod tests {
 
     #[test]
     fn test_into_float() {
-        let t = Torus::new(1 << 15);
+        let t = Torus::new(ZERO_POINTS_FIVE);
         let f: f64 = t.into();
-        assert_eq!(f, 0.5);
+        assert_relative_eq!(f, 0.5, epsilon = 0.0001);
     }
 
     #[test]
     fn test_neg() {
-        let t = Torus::new(1 << 15);
-        assert_eq!((-t).inner, 1 << 15);
+        let t = Torus::new(ZERO_POINTS_FIVE);
+        assert_relative_eq!(<Torus as Into<f64>>::into(-t), 0.5, epsilon = 0.0001);
     }
 
     #[test]
@@ -207,16 +206,16 @@ mod tests {
 
     #[test]
     fn test_add_zero() {
-        let t1 = Torus::new(1 << 15);
-        let t2 = Torus::new(1 << 15);
+        let t1 = Torus::new(ZERO_POINTS_FIVE);
+        let t2 = Torus::new(ZERO_POINTS_FIVE);
         let t3 = t1 + t2;
-        assert_eq!(t3.inner, 0);
+        assert_relative_eq!(<Torus as Into<f64>>::into(t3), 0.0, epsilon = 0.0001);
     }
 
     #[test]
     fn test_add_one() {
-        let t1 = Torus::new(1 << 15);
-        let t2 = Torus::new((1 << 15) + 1);
+        let t1 = Torus::new(ZERO_POINTS_FIVE);
+        let t2 = Torus::new(ZERO_POINTS_FIVE + 1);
         let t3 = t1 + t2;
         assert_eq!(t3.inner, 1);
     }
@@ -235,16 +234,16 @@ mod tests {
 
     #[test]
     fn test_sub_zero() {
-        let t1 = Torus::new(1 << 15);
-        let t2 = Torus::new(1 << 15);
+        let t1 = Torus::new(ZERO_POINTS_FIVE);
+        let t2 = Torus::new(ZERO_POINTS_FIVE);
         let t3 = t1 - t2;
         assert_eq!(t3.inner, 0);
     }
 
     #[test]
     fn test_sub_one() {
-        let t1 = Torus::new(1 << 15);
-        let t2 = Torus::new((1 << 15) - 1);
+        let t1 = Torus::new(ZERO_POINTS_FIVE);
+        let t2 = Torus::new(ZERO_POINTS_FIVE - 1);
         let t3 = t1 - t2;
         assert_eq!(t3.inner, 1);
     }
@@ -275,23 +274,23 @@ mod tests {
 
     #[test]
     fn test_add_assign() {
-        let mut t1 = Torus::new(1 << 15);
-        let t2 = Torus::new(1 << 15);
+        let mut t1 = Torus::new(ZERO_POINTS_FIVE);
+        let t2 = Torus::new(ZERO_POINTS_FIVE);
         t1 += t2;
         assert_eq!(t1.inner, 0);
     }
 
     #[test]
     fn test_sub_assign() {
-        let mut t1 = Torus::new(1 << 15);
-        let t2 = Torus::new(1 << 15);
+        let mut t1 = Torus::new(ZERO_POINTS_FIVE);
+        let t2 = Torus::new(ZERO_POINTS_FIVE);
         t1 -= t2;
         assert_eq!(t1.inner, 0);
     }
 
     #[test]
     fn test_mul() {
-        let t1 = Torus::new(1 << 15);
+        let t1 = Torus::new(ZERO_POINTS_FIVE);
         let t2 = t1 * 2;
         assert_eq!(t2.inner, 0);
     }
@@ -330,7 +329,7 @@ mod tests {
 
     #[test]
     fn test_mul_assign() {
-        let mut t1 = Torus::new(1 << 15);
+        let mut t1 = Torus::new(ZERO_POINTS_FIVE);
         t1 *= 2;
         assert_eq!(t1.inner, 0);
     }
