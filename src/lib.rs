@@ -157,8 +157,22 @@ impl std::ops::Mul<f64> for Torus {
     type Output = Torus;
 
     fn mul(self, rhs: f64) -> Torus {
-        let inner = (self.inner as f64 * rhs) as TorusRepr;
-        Torus { inner }
+        let v = f64::from(self) * rhs;
+        Torus::from(v)
+    }
+}
+
+impl std::ops::Mul<Torus> for f64 {
+    type Output = Torus;
+
+    fn mul(self, rhs: Torus) -> Torus {
+        rhs * self
+    }
+}
+
+impl std::ops::MulAssign<f64> for Torus {
+    fn mul_assign(&mut self, rhs: f64) {
+        *self = *self * rhs;
     }
 }
 
@@ -349,11 +363,27 @@ mod tests {
     }
 
     #[test]
-    fn test_mul_approx_neg() {
+    fn test_mul_approx_neg_i32() {
         let f = 0.3;
         let t1 = Torus::from(f);
         let t2 = t1 * -2;
         assert_relative_eq!(f64::from(t2), 0.4, epsilon = 0.0001);
+    }
+    
+    #[test]
+    fn test_mul_approx_neg_f64_1() {
+        let f = 0.125;
+        let t1 = Torus::from(f);
+        let t2 = t1 * -1.;
+        assert_relative_eq!(f64::from(t2), 0.875, epsilon = 0.0001);
+    }
+
+    #[test]
+    fn test_mul_approx_neg_f64_2() {
+        let f = 0.125;
+        let t1 = Torus::from(f);
+        let t2 = t1 * -1.5;
+        assert_relative_eq!(f64::from(t2), 0.8125, epsilon = 0.0001);
     }
 
     #[test]
