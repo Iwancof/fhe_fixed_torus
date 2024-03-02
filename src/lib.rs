@@ -64,22 +64,23 @@ impl From<f64> for Torus {
     }
 }
 
-impl Into<f64> for Torus {
-    fn into(self) -> f64 {
+impl From<Torus> for f64 {
+    fn from(t: Torus) -> f64 {
         // TODO: overflow?
-        (self.inner as f64) / (Self::SHIFT as f64)
+        (t.inner as f64) / (Torus::SHIFT as f64)
     }
 }
 
+
 impl std::fmt::Debug for Torus {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "Torus({})", <Torus as Into<f64>>::into(*self))
+        write!(f, "Torus({})", f64::from(*self))
     }
 }
 
 impl std::fmt::Display for Torus {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "{}", <Torus as Into<f64>>::into(*self))
+        write!(f, "{}", f64::from(*self))
     }
 }
 
@@ -162,37 +163,37 @@ mod tests {
     #[test]
     fn test_from_float() {
         let t = Torus::from(0.5);
-        assert_relative_eq!(<Torus as Into<f64>>::into(t), 0.5, epsilon = 0.0001);
+        assert_relative_eq!(f64::from(t), 0.5, epsilon = 0.0001);
     }
 
     #[test]
     fn test_from_float_wrap_1() {
         let t = Torus::from(1.5);
-        assert_relative_eq!(<Torus as Into<f64>>::into(t), 0.5, epsilon = 0.0001);
+        assert_relative_eq!(f64::from(t), 0.5, epsilon = 0.0001);
     }
 
     #[test]
     fn test_from_float_wrap_2() {
         let t = Torus::from(134.2);
-        assert_relative_eq!(<Torus as Into<f64>>::into(t), 0.2, epsilon = 0.0001);
+        assert_relative_eq!(f64::from(t), 0.2, epsilon = 0.0001);
     }
 
     #[test]
     fn test_from_float_neg() {
         let t = Torus::from(-0.5);
-        assert_relative_eq!(<Torus as Into<f64>>::into(t), 0.5, epsilon = 0.0001);
+        assert_relative_eq!(f64::from(t), 0.5, epsilon = 0.0001);
     }
 
     #[test]
     fn test_from_float_neg_wrap() {
         let t = Torus::from(-1.5);
-        assert_relative_eq!(<Torus as Into<f64>>::into(t), 0.5, epsilon = 0.0001);
+        assert_relative_eq!(f64::from(t), 0.5, epsilon = 0.0001);
     }
 
     #[test]
     fn test_from_float_neg_wrap_2() {
         let t = Torus::from(-134.2);
-        assert_relative_eq!(<Torus as Into<f64>>::into(t), 0.8, epsilon = 0.0001);
+        assert_relative_eq!(f64::from(t), 0.8, epsilon = 0.0001);
     }
 
     #[test]
@@ -205,19 +206,19 @@ mod tests {
     #[test]
     fn test_neg() {
         let t = Torus::new(ZERO_POINTS_FIVE);
-        assert_relative_eq!(<Torus as Into<f64>>::into(-t), 0.5, epsilon = 0.0001);
+        assert_relative_eq!(f64::from(-t), 0.5, epsilon = 0.0001);
     }
 
     #[test]
     fn test_neg_approx_1() {
         let t = Torus::from(0.5);
-        assert_relative_eq!(<Torus as Into<f64>>::into(-t), 0.5, epsilon = 0.0001);
+        assert_relative_eq!(f64::from(-t), 0.5, epsilon = 0.0001);
     }
 
     #[test]
     fn test_neg_approx_2() {
         let t = Torus::from(0.3);
-        assert_relative_eq!(<Torus as Into<f64>>::into(-t), 0.7, epsilon = 0.0001);
+        assert_relative_eq!(f64::from(-t), 0.7, epsilon = 0.0001);
     }
 
     #[test]
@@ -225,7 +226,7 @@ mod tests {
         let t1 = Torus::new(ZERO_POINTS_FIVE);
         let t2 = Torus::new(ZERO_POINTS_FIVE);
         let t3 = t1 + t2;
-        assert_relative_eq!(<Torus as Into<f64>>::into(t3), 0.0, epsilon = 0.0001);
+        assert_relative_eq!(f64::from(t3), 0.0, epsilon = 0.0001);
     }
 
     #[test]
@@ -245,7 +246,7 @@ mod tests {
         let t2 = Torus::from(f2);
 
         let t3 = t1 + t2;
-        assert_relative_eq!(<Torus as Into<f64>>::into(t3), 0.01, epsilon = 0.001);
+        assert_relative_eq!(f64::from(t3), 0.01, epsilon = 0.001);
     }
 
     #[test]
@@ -273,7 +274,7 @@ mod tests {
         let t2 = Torus::from(f2);
 
         let t3 = t2 - t1;
-        assert_relative_eq!(<Torus as Into<f64>>::into(t3), 0.01, epsilon = 0.001);
+        assert_relative_eq!(f64::from(t3), 0.01, epsilon = 0.001);
     }
 
     #[test]
@@ -285,7 +286,7 @@ mod tests {
         let t2 = Torus::from(f2);
 
         let t3 = t1 - t2;
-        assert_relative_eq!(<Torus as Into<f64>>::into(t3), 0.99, epsilon = 0.001);
+        assert_relative_eq!(f64::from(t3), 0.99, epsilon = 0.001);
     }
 
     #[test]
@@ -316,7 +317,7 @@ mod tests {
         let f = 0.3;
         let t1 = Torus::from(f);
         let t2 = t1 * 2;
-        assert_relative_eq!(<Torus as Into<f64>>::into(t2), 0.6, epsilon = 0.0001);
+        assert_relative_eq!(f64::from(t2), 0.6, epsilon = 0.0001);
     }
 
     #[test]
@@ -324,7 +325,7 @@ mod tests {
         let f = 0.6;
         let t1 = Torus::from(f);
         let t2 = t1 * 2;
-        assert_relative_eq!(<Torus as Into<f64>>::into(t2), 0.2, epsilon = 0.0001);
+        assert_relative_eq!(f64::from(t2), 0.2, epsilon = 0.0001);
     }
 
     #[test]
@@ -332,7 +333,7 @@ mod tests {
         let f = 0.3;
         let t1 = Torus::from(f);
         let t2 = t1 * -2;
-        assert_relative_eq!(<Torus as Into<f64>>::into(t2), 0.4, epsilon = 0.0001);
+        assert_relative_eq!(f64::from(t2), 0.4, epsilon = 0.0001);
     }
 
     #[test]
@@ -340,7 +341,7 @@ mod tests {
         let f = 0.6;
         let t1 = Torus::from(f);
         let t2 = t1 * -2;
-        assert_relative_eq!(<Torus as Into<f64>>::into(t2), 0.8, epsilon = 0.0001);
+        assert_relative_eq!(f64::from(t2), 0.8, epsilon = 0.0001);
     }
 
     #[test]
@@ -356,8 +357,8 @@ mod tests {
         for _ in 0..1000 {
             let mut rng = rand::thread_rng();
             let t = Torus::normal(0.1, &mut rng);
-            assert!(<Torus as Into<f64>>::into(t) >= 0.0);
-            assert!(<Torus as Into<f64>>::into(t) < 1.0);
+            assert!(f64::from(t) >= 0.0);
+            assert!(f64::from(t) < 1.0);
         }
     }
 
@@ -368,7 +369,7 @@ mod tests {
             .map(|_| {
                 let mut rng = rand::thread_rng();
                 let t = Torus::normal(0.1, &mut rng);
-                <Torus as Into<f64>>::into(t)
+                f64::from(t)
             })
             .sum();
 
@@ -381,8 +382,10 @@ mod tests {
         for _ in 0..1000 {
             let mut rng = rand::thread_rng();
             let t = Torus::uniform(&mut rng);
-            assert!(<Torus as Into<f64>>::into(t) >= 0.0);
-            assert!(<Torus as Into<f64>>::into(t) < 1.0);
+            // assert!(f64::from(t) >= 0.0);
+            // assert!(f64::from(t) < 1.0);
+            assert!(f64::from(t) >= 0.0);
+            assert!(f64::from(t) < 1.0);
         }
     }
 }
