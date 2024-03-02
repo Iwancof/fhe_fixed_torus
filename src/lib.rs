@@ -25,6 +25,7 @@ impl Torus {
 
         let normal = statrs::distribution::Normal::new(0., std).unwrap();
         let sample = normal.sample(state);
+        // TODO: instead of generating a float and converting it to integer, generate an integer directly
 
         Torus::from(sample)
     }
@@ -35,6 +36,7 @@ impl Torus {
 
         let uniform = rand::distributions::Uniform::new(0., 1.);
         let sample = uniform.sample(state);
+        // TODO: instead of generating a float and converting it to integer, generate an integer directly
 
         Torus::from(sample)
     }
@@ -50,6 +52,7 @@ impl From<f64> for Torus {
 
 impl Into<f64> for Torus {
     fn into(self) -> f64 {
+        // TODO: overflow?
         (self.inner as f64) / (Self::SHIFT as f64)
     }
 }
