@@ -7,7 +7,7 @@ type TorusRepr = u32;
 /// Fixed point float
 /// for example, 0b10000000... = 0.5
 /// So, for all t in Torus, 0 <= t < 1
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy)]
 pub struct Torus {
     inner: TorusRepr,
 }
@@ -39,6 +39,20 @@ impl Torus {
         // TODO: instead of generating a float and converting it to integer, generate an integer directly
 
         Torus::from(sample)
+    }
+}
+
+impl num_traits::identities::ConstZero for Torus {
+    const ZERO: Self = Torus { inner: 0 };
+}
+
+impl num_traits::identities::Zero for Torus {
+    fn zero() -> Self {
+        Self { inner: 0 }
+    }
+
+    fn is_zero(&self) -> bool {
+        self.inner == 0
     }
 }
 
