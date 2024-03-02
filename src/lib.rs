@@ -19,6 +19,14 @@ impl Torus {
         Torus { inner }
     }
 
+    pub fn sign(&self) -> i32 {
+        if self.inner < (Torus::SHIFT / 2) {
+            1
+        } else {
+            -1
+        }
+    }
+
     #[cfg(feature = "random")]
     pub fn normal(std: f64, state: &mut impl rand::Rng) -> Torus {
         use rand::distributions::Distribution;
@@ -159,6 +167,18 @@ mod tests {
     use super::*;
 
     const ZERO_POINTS_FIVE: TorusRepr = 1 << (TorusRepr::BITS - 1);
+
+    #[test]
+    fn test_sign_plus() {
+        let t = Torus::from(0.4);
+        assert_eq!(t.sign(), 1);
+    }
+    
+    #[test]
+    fn test_sign_minus() {
+        let t = Torus::from(0.6);
+        assert_eq!(t.sign(), -1);
+    }
 
     #[test]
     fn test_from_float() {
