@@ -7,11 +7,11 @@ edition = "2021"
 statrs = { version = "0.16.0", optional = true }
 rand = { version = "0.8.5", optional = true }
 num-traits = "0.2.18"
+distr_traits = { version = "0.1.0", path = "../../distr_traits", features = ["derive"], optional = true }
 
 [dev-dependencies]
 approx = "0.5.1"
 
 [features]
-random = ["dep:statrs", "dep:rand"]
-
+random = ["dep:statrs", "dep:rand", "dep:distr_traits"]
 default = ["random"]

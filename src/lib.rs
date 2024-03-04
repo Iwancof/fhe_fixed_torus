@@ -26,25 +26,30 @@ impl Torus {
             -1
         }
     }
+}
 
-    #[cfg(feature = "random")]
-    pub fn normal(std: f64, state: &mut impl rand::Rng) -> Torus {
-        use rand::distributions::Distribution;
-
-        let normal = statrs::distribution::Normal::new(0., std).unwrap();
-        let sample = normal.sample(state);
-        // TODO: instead of generating a float and converting it to integer, generate an integer directly
-
-        Torus::from(sample)
-    }
-
-    #[cfg(feature = "random")]
-    pub fn uniform(state: &mut impl rand::Rng) -> Torus {
+#[cfg(feature = "random")]
+impl distr_traits::uniform::UniformSample for Torus {
+    fn uniform_sample(state: &mut impl rand::Rng) -> Self {
         use rand::distributions::Distribution;
 
         let uniform = rand::distributions::Uniform::new(0., 1.);
         let sample = uniform.sample(state);
-        // TODO: instead of generating a float and converting it to integer, generate an integer directly
+
+        Torus::from(sample)
+    }
+}
+
+#[cfg(feature = "random")]
+impl distr_traits::normal::NormalSample for Torus {
+    type Mean = f64;
+    type Variance = f64;
+
+    fn normal_sample(mean: f64, std: f64, state: &mut impl rand::Rng) -> Self {
+        use rand::distributions::Distribution;
+
+        let normal = statrs::distribution::Normal::new(mean, std).unwrap();
+        let sample = normal.sample(state);
 
         Torus::from(sample)
     }
@@ -179,6 +184,8 @@ impl std::ops::MulAssign<f64> for Torus {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use distr_traits::normal::NormalSample;
+    use distr_traits::uniform::UniformSample;
 
     const ZERO_POINTS_FIVE: TorusRepr = 1 << (TorusRepr::BITS - 1);
 
@@ -406,7 +413,7 @@ mod tests {
     fn test_normal() {
         for _ in 0..1000 {
             let mut rng = rand::thread_rng();
-            let t = Torus::normal(0.1, &mut rng);
+            let t = Torus::normal_sample(0., 0.1, &mut rng);
             assert!(f64::from(t) >= 0.0);
             assert!(f64::from(t) < 1.0);
         }
@@ -418,7 +425,7 @@ mod tests {
         let sum: f64 = (0..1000)
             .map(|_| {
                 let mut rng = rand::thread_rng();
-                let t = Torus::normal(0.1, &mut rng);
+                let t = Torus::normal_sample(0., 0.1, &mut rng);
                 f64::from(t)
             })
             .sum();
@@ -431,7 +438,7 @@ mod tests {
     fn test_uniform() {
         for _ in 0..1000 {
             let mut rng = rand::thread_rng();
-            let t = Torus::uniform(&mut rng);
+            let t = Torus::uniform_sample(&mut rng);
             // assert!(f64::from(t) >= 0.0);
             // assert!(f64::from(t) < 1.0);
             assert!(f64::from(t) >= 0.0);
